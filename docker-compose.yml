@@ -1,0 +1,58 @@
+version: '3.7'
+
+services:
+  webz-001:
+    image: webz
+    container_name: webz-001
+    ports:
+      - "8081:80"
+    environment:
+      - CONTAINER_NAME=webz-001
+    command: bash -c "service apache2 start && corosync -f & pacemakerd & service pcsd start && tail -f /var/log/apache2/error.log"
+    privileged: true  
+    networks:
+      - cluster-net
+
+  webz-002:
+    image: webz
+    container_name: webz-002
+    ports:
+      - "8082:80"
+    environment:
+      - CONTAINER_NAME=webz-002
+    command: bash -c "service apache2 start && corosync -f & pacemakerd & service pcsd start && tail -f /var/log/apache2/error.log"
+    privileged: true  
+    networks:
+      - cluster-net
+
+  webz-003:
+    image: webz
+    container_name: webz-003
+    ports:
+      - "8083:80"
+    environment:
+      - CONTAINER_NAME=webz-003
+    command: bash -c "service apache2 start && corosync -f & pacemakerd & service pcsd start && tail -f /var/log/apache2/error.log"
+    privileged: true  
+    networks:
+      - cluster-net
+
+  webz-004:
+    image: webz-jenkins
+    container_name: webz-004
+    privileged: true
+    networks:
+      - cluster-net
+    ports:
+      - "8084:8080"
+    environment:
+      - CONTAINER_NAME=webz-jenkins-log
+    command: bash -c "mkdir -p /var/log/jenkins && touch /var/log/jenkins/floating_ip_monitor.log && chown jenkins:jenkins /var/log/jenkins/floating_ip_monitor.log && chmod 644 /var/log/jenkins/floating_ip_monitor.log && jenkins.sh && tail -f /var/log/jenkins/jenkins.log"
+    volumes:
+      - ./jenkins_logs:/var/log/jenkins
+  
+
+
+networks:
+  cluster-net:
+    external: true

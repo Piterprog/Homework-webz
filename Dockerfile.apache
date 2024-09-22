@@ -1,0 +1,33 @@
+# Use Ubuntu 18.04 as the base image
+FROM ubuntu:18.04
+
+# Set environment variables to avoid interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Asia/Jerusalem
+
+# Install necessary packages including ping utility
+RUN apt-get update && \
+    apt-get install -y apache2 pacemaker corosync pcs curl tzdata libqb-dev crmsh sudo iputils-ping policycoreutils-python-utils iproute2 && \
+    ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo $TZ > /etc/timezone && \
+    dpkg-reconfigure --frontend noninteractive tzdata && \
+    apt-get clean
+
+# Create the hacluster user and set the password
+RUN echo "hacluster:hacluster" | chpasswd && \
+    adduser hacluster sudo
+
+# Copy the Corosync configuration file into the container
+COPY corosync.conf /etc/corosync/corosync.conf
+
+# Copy the Apache virtual host configuration file
+COPY 000-default.conf /etc/apache2/sites-available/000-default.conf
+
+# Copy the custom index.html file for the Apache server
+COPY index.html /var/www/html/index.html
+
+# Expose port 80 for Apache
+EXPOSE 80
+
+# Start all services manually through bash
+CMD bash -c "service apache2 start && corosync -f & pacemakerd & service pcsd start && tail -f /var/log/apache2/error.log"

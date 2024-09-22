@@ -1,0 +1,34 @@
+FROM jenkins/jenkins:lts
+
+USER root
+
+# Update and install necessary packages
+RUN apt-get update && apt-get install -y \
+    curl \
+    vim \
+    sudo \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a directory for logs, create a log file, and set permissions in /var/log/jenkins
+RUN mkdir -p /var/log/jenkins && \
+    touch /var/log/jenkins/floating_ip_monitor.log && \
+    chown jenkins:jenkins /var/log/jenkins/floating_ip_monitor.log && \
+    chmod 755 /var/log/jenkins
+
+# Add the Jenkins user to the root group
+RUN usermod -aG root jenkins
+
+# Disable the setup wizard on the first run of Jenkins
+ENV JAVA_OPTS -Djenkins.install.runSetupWizard=false
+
+# Add Jenkins user to sudoers without requiring a password
+RUN echo "jenkins ALL=NOPASSWD: ALL" >> /etc/sudoers
+
+USER jenkins
+
+# Set the working directory
+WORKDIR /var/jenkins_home
+
+CMD ["jenkins.sh"]
+
+
